@@ -1,0 +1,31 @@
+{
+  "name": "domain-connect",
+  "version": "1.0.0",
+  "description": "domain-connect protocol implementation",
+  "main": "index.js",
+  "dependencies": {
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-plugin-prettier": "^2.3.0",
+    "tslint": "^6.1.2",
+    "typescript": "^3.9.5"
+  },
+  "devDependencies": {
+    "eslint": "^7.2.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.3",
+    "prettier": "^2.0.5"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alanzplus/domain-connect.git"
+  },
+  "author": "Alan Xuan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alanzplus/domain-connect/issues"
+  },
+  "homepage": "https://github.com/alanzplus/domain-connect#readme"
+}
