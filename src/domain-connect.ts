@@ -30,7 +30,7 @@ type TemplateApplyProperties = {
     [templateVariables: string]: undefined | string;
 };
 
-export class DomainConnect {
+export default class DomainConnect {
     private readonly domain: string;
     private readonly dnsProviderSettings: Promise<DnsProviderSettings>;
 
