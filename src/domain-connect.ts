@@ -1,7 +1,6 @@
 import dns from 'dns';
-import axios, { AxiosError } from 'axios';
 const Resolver = dns.promises.Resolver;
-const resolver = new Resolver();
+import 'isomorphic-fetch';
 
 type DnsProviderSettings = {
     providerId: string;
@@ -30,44 +29,60 @@ type TemplateApplyProperties = {
     [templateVariables: string]: undefined | string;
 };
 
+async function discoverDnsProvider(domain: string): Promise<string | null> {
+    const resolver = new Resolver();
+    const queryDomain = `_domainconnect.${domain}`;
+    try {
+        return (await resolver.resolveTxt(queryDomain))?.[0]?.[0];
+    } catch (e) {
+        if (e?.errno === 'ENOTFOUND') {
+            return null;
+        }
+        throw e;
+    }
+}
+
+function getDnsProviderSettings(dnsProvider: string, domain: string): Promise<DnsProviderSettings> {
+    return fetch(`https://${dnsProvider}/v2/${domain}/settings`).then((response) => {
+        if (response.ok) {
+            return response.json();
+        }
+        throw new Error(`status:${response.status}`);
+    });
+}
+
 export default class DomainConnect {
     private readonly domain: string;
     private readonly dnsProviderSettings: Promise<DnsProviderSettings>;
+    dnsProvider: Promise<string | null>;
 
     constructor(domain: string) {
         this.domain = domain;
-        this.dnsProviderSettings = this.discoverDnsProvider(domain).catch((reason) => {
-            throw new Error(`Domain ${domain} is not supported by domain-connect, reason: ${reason}`);
-        });
+        this.dnsProvider = discoverDnsProvider(domain);
+        this.dnsProviderSettings = this.dnsProvider
+            .then((provider) => {
+                if (!provider) {
+                    throw new Error('no dns provider');
+                }
+                return provider;
+            })
+            .then((provider) => getDnsProviderSettings(provider, domain));
     }
 
     async getDnsProviderSettings(): Promise<DnsProviderSettings> {
         return this.dnsProviderSettings;
     }
 
-    async discoverDnsProvider(domain: string): Promise<DnsProviderSettings> {
-        const queryDomain = `_domainconnect.${domain}`;
-        const records = await resolver.resolveTxt(queryDomain);
-        const dnsProvider = records?.[0]?.[0];
-        if (!dnsProvider) {
-            throw new Error(`No TXT record found for ${queryDomain}`);
-        }
-        return (await axios.get<DnsProviderSettings>(`https://${dnsProvider}/v2/${domain}/settings`)).data;
-    }
-
     async querySupportTemplate(serviceProviderId: string, serviceId: string): Promise<null | TemplateSupportResponse> {
         const settings = await this.dnsProviderSettings;
-        return axios
-            .get<TemplateSupportResponse>(
-                `${settings.urlAPI}/v2/domainTemplates/providers/${serviceProviderId}/services/${serviceId}`,
-            )
-            .then((res) => res.data)
-            .catch((reason: AxiosError) => {
-                if (reason.response && reason.response.status === 404) {
-                    return null;
+        return fetch(`${settings.urlAPI}/v2/domainTemplates/providers/${serviceProviderId}/services/${serviceId}`).then(
+            (response) => {
+                if (response.ok) {
+                    return response.json();
                 }
-                throw reason;
-            });
+                return null;
+            },
+        );
     }
 
     async getApplyTemplateSyncUrl(

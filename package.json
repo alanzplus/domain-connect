@@ -5,7 +5,7 @@
   "main": "dist/domain-connect.js",
   "types": "dist/domain-connect.d.ts",
   "dependencies": {
-    "axios": "^0.19.2",
+    "isomorphic-fetch": "^2.2.1",
     "tslint": "^6.1.2",
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^2.3.0",
